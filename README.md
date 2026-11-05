@@ -1,6 +1,6 @@
 # cad-ai-test-automation
 
-面向 Windows / AutoCAD 二次开发的 AI 自动测试 Skill，v1.0。
+面向 Windows / AutoCAD 二次开发的 AI 自动测试 Skill，v1.0
 
 基于 [revit-ai-test-automation](https://github.com/RegalZzz/revit-ai-test-automation) 的测试闭环，针对 CAD 重做 DLL 加载、命令执行、事务隔离、弹窗处理和图纸关闭机制。包含可运行的 PowerShell 工具与 C# 测试插件模板，帮助 AI 从业务需求完成场景、代码、构建、实机执行、断言和修正回归。
 
