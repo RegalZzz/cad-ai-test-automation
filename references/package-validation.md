@@ -1,0 +1,56 @@
+# 包内资源验证记录
+
+日期：2026-11-05。版本：v1.0。
+
+## 已通过的真实 AutoCAD 运行
+
+目标为本机完整 AutoCAD 2020 中文界面，API 版本 23.1，ACADVER 实际值 `23.1s (LMS Tech)`，可执行文件 Build `R23.1.47.0.0`。
+
+| 运行 | 输入 | 加载确认 | 结果 |
+| --- | --- | --- | --- |
+| PowerShell 7.5.4 / Desktop | 系统 acadiso.dwt 的本轮副本；路径含中文与空格 | 脚本按进程、DLL 字段与哈希匹配，向实际“始终加载”按钮发送 BM_CLICK，无人工点击 | 7 条断言通过，CADTEST_PROBE 真实调度，CAD 正常退出，启动器退出码 0 |
+| Windows PowerShell 5.1.22621.7376 / Desktop | 首轮生成的 before-commands.dwg 另复制为本轮输入；路径含中文与空格 | 同上，无人工点击 | 7 条断言通过，CADTEST_PROBE 真实调度，CAD 正常退出，启动器退出码 0 |
+
+每轮包含 6 条场景/命令断言和 1 条基础设施断言：实体长度、提交的嵌套事务实体端点回读、外层 Abort 后 ModelSpace 句柄集恢复、真实命令完成事件、新增数量及已知几何。默认场景明确标注 `api-smoke + fixture-command-smoke; no business plugin tested`。
+
+两次均生成 before/after DWG 数据库证据，记录实际 runner 路径/哈希、启动信号、断言和原子结果；CloseAndDiscard 成功，源输入与磁盘副本 SHA256 均未改变。退出通过一次 Idle 回调请求，不在清理命令栈内直接退出。
+
+这些结果证明模板与基本宿主闭环，不证明用户生产插件、Ribbon 或第三方 UI 已通过。保存的 DWG 是数据库证据，不是屏幕截图。原始本机运行记录保留在项目忽略的 `.local/` 下，没有上传图纸、DLL 或机器路径。
+
+## 弹窗实现的实测依据
+
+从本机实际安全提示取得：标题“安全性 - 未签名的可执行文件”、#32770、MainInstruction、ContentText、三个按钮与其文字/ID。DLL 信息分成“名称”和“位置”；UI Automation Name 使用转义 CRLF 和双反斜线。对话框挂在 CAD 主窗口下面，按桌面直接子窗口或 ClassName 查询不足以可靠找到。
+
+`InvokePattern.Invoke()` 返回后，实测窗口仍存在且无 DLL 启动信号；经再次核验目标后，原生 BM_CLICK 才使运行继续。最终包使用一次性意图记录及 SendMessageTimeout 向实际按钮发送消息，验证按钮 PID、父子关系与可用状态。两个 PowerShell 宿主均完成自动“始终加载”实机运行。
+
+早期调试中用户手动操作过“始终加载”。最终两轮均采用新运行目录并记录脚本的实际按钮操作，不把用户之前的手动动作作为自动化证据。不声称新路径或重编译 DLL 必然继承旧信任，也没有修改 SECURELOAD 或 TRUSTEDPATHS。
+
+## 工具验证
+
+`tests/Test-Package.ps1` 在 PowerShell 7.5.4 与 Windows PowerShell 5.1.22621.7376 下各通过 45 项检查，覆盖：
+
+- 六份 PowerShell 脚本解析、生成 net472 工程、拒绝覆盖、2025 net8.0-windows 映射和模板占位符清除。
+- DLL 提示的真实/转义 CRLF、双反斜线、中文路径、目录前缀碰撞、不同 DLL 和重复字段。
+- 合成证据的运行/进程/宿主/年份错误、失败标志、字符串冒充布尔值、无场景断言、无撤销/关闭、错误范围/路径/哈希、输入修改、缺少结果及 PrepareOnly 冒充通过。
+- 非零宿主退出、Core 退出要求、保留原超时状态、读取器不改写运行记录、未指定动作/未记录授权/已停止启动器的确认拒绝路径。
+
+这些工具检查中的图纸/DLL 是明确标识的合成字节，不调用 CAD，不作为实机证据。脱敏的中文弹窗结构位于 `tests/fixtures/`，用于解析回归。
+
+另外实际执行了 PrepareOnly 构建和输入复制，支持中文及空格路径；CMD 主入口选中 PowerShell 7 并成功完成 PrepareOnly。CMD 的自动回落 5.1 分支本次未单独模拟；5.1 的直接启动与真实 Desktop 测试已经通过。
+
+Skill frontmatter 经 skill-creator 的 quick_validate.py 检查；在 Windows 中文默认代码页下以 `python -X utf8` 执行。包内相对链接与 Git 内容在交付前检查。
+
+## 发现并修正的问题
+
+- ACADVER 存在字母/构建后缀，改为提取开头数字主次版本；保留完整值作证据。
+- Desktop 启动时隐藏主窗口会妨碍用户观察，改为交互窗口；不将 Desktop 伪装成无界面运行。
+- 直接在 Session 清理命令栈中 Quit 出现非零退出；改为清理后的一次 Idle 回调，最终两轮退出码均为 0。
+- 最初的加载脚本未覆盖 CAD 对话框的层级与分字段路径；依据实际观测修正，并以原生按钮消息完成验证。
+
+早期失败与超时记录仍保留，未改写为成功。曾有超时后恢复得到通过结果的运行，读取器保留其原始 TimedOut 状态。
+
+## 尚未通过及未覆盖
+
+Core Console 是实验入口：修正了缺少桌面 CloseAndDiscard 扩展的编译问题，确认构建输出不引用 AcMgd，并按实际 UTF-16 解码 Console 输出。但本机 2020 环境在中文及纯英文运行目录均出现 NETLOAD“无法加载程序集”，未产生 started.txt/result.json。没有通过修改全局安全变量绕过，也没有把进程退出码 0 当成测试通过。加载失败原因尚未确定，不声称该模式已经可用。
+
+AutoCAD 2021–2026 的实机兼容性、英文界面按钮、AutoCAD LT/其他厂商/垂直产品、生产业务 DLL、异步/Session 业务命令、Ribbon/对话框/点选流程、复杂外参及多文档副作用均未验证。新接入业务仍须在目标 CAD 与专用 fixture 中执行。

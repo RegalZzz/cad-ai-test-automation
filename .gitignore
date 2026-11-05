@@ -1,0 +1,6 @@
+.local/
+**/bin/
+**/obj/
+*.user
+*.suo
+__pycache__/

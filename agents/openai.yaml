@@ -1,0 +1,4 @@
+interface:
+  display_name: "cad-ai-test-automation"
+  short_description: "为 AutoCAD 插件生成场景、执行真实宿主测试并诊断回归结果"
+  default_prompt: "使用 $cad-ai-test-automation 为当前 AutoCAD 插件建立并执行可复现的自动回归测试，核对图形结果、真实命令入口与加载证据。"

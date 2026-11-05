@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>__TARGET_FRAMEWORK__</TargetFramework>
+    <AssemblyName>__HARNESS_NAME__</AssemblyName>
+    <RootNamespace>__HARNESS_NAME__</RootNamespace>
+    <OutputType>Library</OutputType>
+    <PlatformTarget>x64</PlatformTarget>
+    <LangVersion>7.3</LangVersion>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+    <DefineConstants Condition="'$(CadHost)' == 'CoreConsole'">$(DefineConstants);CAD_CORE_CONSOLE</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="AcCoreMgd"><HintPath>$(CadInstallDir)\accoremgd.dll</HintPath><Private>False</Private></Reference>
+    <Reference Include="AcDbMgd"><HintPath>$(CadInstallDir)\acdbmgd.dll</HintPath><Private>False</Private></Reference>
+    <Reference Include="AcMgd" Condition="'$(CadHost)' != 'CoreConsole'"><HintPath>$(CadInstallDir)\acmgd.dll</HintPath><Private>False</Private></Reference>
+    <Reference Include="System.Runtime.Serialization" Condition="'$(TargetFramework)' != 'net8.0-windows'" />
+    <Compile Include="CadTestApplication.cs" />
+    <Compile Include="TestContext.cs" />
+    <Compile Include="TestScenario.cs" />
+  </ItemGroup>
+  <Target Name="CheckCadReferences" BeforeTargets="ResolveAssemblyReferences">
+    <Error Condition="!Exists('$(CadInstallDir)\accoremgd.dll') Or !Exists('$(CadInstallDir)\acdbmgd.dll')" Text="Pass CadInstallDir for the matching AutoCAD installation." />
+  </Target>
+</Project>

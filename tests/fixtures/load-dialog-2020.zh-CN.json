@@ -1,0 +1,11 @@
+{
+  "Source": "Sanitized shape observed on AutoCAD 2020 Chinese UI; no actual machine path",
+  "Title": "安全性 - 未签名的可执行文件",
+  "ClassName": "#32770",
+  "AssemblyPath": "C:\\CadTest\\中文 路径\\north\\bin\\Harness.dll",
+  "ContentText": "名称:             Harness.dll\\r\\n发布者:           未知发布者\\r\\n位置:             C:\\\\CadTest\\\\中文 路径\\\\north\\\\bin\\r\\n颁发者:           无",
+  "AlwaysButton": "始终加载",
+  "AlwaysId": "CommandButton_1001",
+  "OnceButton": "加载一次",
+  "OnceId": "CommandButton_1002"
+}
