@@ -129,13 +129,18 @@ try {
     Write-CadJson $marker $activeRun
     Write-Host "CAD PID: $($process.Id)"
     $deadline = [DateTime]::UtcNow.AddSeconds($TimeoutSeconds)
-    $loadActionUsed = $false
+    $dllAction = if ($AutoTrustRunner) { 'Always' } elseif ($AutoLoadRunner) { 'Once' } else { 'None' }
     while (-not $process.HasExited -and [DateTime]::UtcNow -lt $deadline) {
-        if (($AutoLoadRunner -or $AutoTrustRunner) -and -not $loadActionUsed -and -not (Test-Path -LiteralPath (Join-Path $runRoot 'started.txt'))) {
-            $approval = & (Join-Path $PSScriptRoot 'Approve-CadTestDll.ps1') -RunDirectory $runRoot -LoadOnce:$AutoLoadRunner -ApproveAlways:$AutoTrustRunner
-            if ($approval.ActionInvoked) { $loadActionUsed = $true }
+        $acted = $false
+        if ($HostMode -eq 'Desktop') {
+            # Dialogs can appear in sequence: runner, dependencies, and finally
+            # demand-loaded plug-ins while the drawing is opening. Poll until CAD
+            # exits so every matching prompt is handled, including post-open ones.
+            $handled = & (Join-Path $PSScriptRoot 'Handle-CadTestDialogs.ps1') -RunDirectory $runRoot -DllAction $dllAction
+            $acted = $handled.ActionInvoked
         }
-        Start-Sleep -Milliseconds 500
+        # Drain consecutive font/DLL prompts immediately; only idle scans wait.
+        if (-not $acted) { Start-Sleep -Milliseconds 100 }
     }
     if (-not $process.HasExited) { $run.State='TimedOut'; throw "Timed out. CAD PID $($process.Id) and evidence preserved. Handle the observed prompt, then read this same run with Read-CadTestResult.ps1." }
     if ($HostMode -eq 'CoreConsole') {

@@ -1,6 +1,6 @@
 # cad-ai-test-automation
 
-面向 Windows / AutoCAD 二次开发的 AI 自动测试 Skill，v1.0
+面向 Windows / AutoCAD 二次开发的 AI 自动测试 Skill，v1.1
 
 针对 CAD 重做 DLL 加载、命令执行、事务隔离、弹窗处理和图纸关闭机制。包含可运行的 PowerShell 工具与 C# 测试插件模板，帮助 AI 从业务需求完成场景、代码、构建、实机执行、断言和修正回归。
 
@@ -32,7 +32,7 @@ pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\New-CadTestHarness.p
 
 # 去掉 PrepareOnly 才会实机运行。
 # 无底图时可将 DrawingPath 换为 TemplatePath，指向实际 .dwt。
-# 自动处理本轮指定测试 DLL 的“始终加载”，会记住对应 DLL 的信任决定。
+# 自动处理本轮 CAD 中所有 DLL 的“始终加载”，包括打开图纸后出现的提示。
 .\scripts\Run-CadIntegrationTest.cmd `
     -ProjectPath 'D:\MyCadPlugin\tests\CadTests\CadTests.csproj' `
     -CadInstallDir 'D:\Program Files\Autodesk\AutoCAD 2020' `
@@ -45,7 +45,9 @@ pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\Read-CadTestResult.p
 
 默认产物目录是生成工程下 `.local/cad-tests/<ID>/`；可用 TestRoot 指定。每轮生成 `run.json`、构建/断言日志、原子 `result.json` 和必要图形证据。源输入与副本磁盘哈希均检查，超时保留 CAD 进程与原始状态。测试产物加入业务仓库忽略规则。
 
-`-AutoTrustRunner` 自动识别本轮 DLL 并点击“始终加载”，不等待用户手点；不全局关闭安全加载。只需“加载一次”时使用 `-AutoLoadRunner`，两者互斥。加载授权只适用于指定测试 DLL；业务依赖的独立加载提示需分别匹配。详细实现与实测控件见 [加载与弹窗处理](references/load-dialogs.md)。
+`-AutoTrustRunner` 保留原参数名，范围扩展为本轮 CAD 进程中的所有 DLL 安全提示：直接向“始终加载”按钮发送原生消息，逐个处理，不受测试 DLL 名称或启动信号限制，直到进程结束或超时。只需“加载一次”时使用 `-AutoLoadRunner`，两者互斥。不指定这两个选项时不自动确认 DLL。
+
+Desktop 默认处理“代理信息”和缺失字体提示：选择“显示代理图形”并确认；对于“指定字体给样式…”选择右侧“大字体”列表第二项并确定，连续出现就连续处理。处理后立即寻找下一窗，空闲时每 100 毫秒检查一次。详细实现、持久信任和操作记录见 [加载与弹窗处理](references/load-dialogs.md)。
 
 已验证的运行入口是 **Desktop**。包内保留 `-HostMode CoreConsole -DrawingPath <DWG>` 实验入口；当前 AutoCAD 2020 环境在 NETLOAD 阶段失败，尚未通过实机验证。无界面模式需要进一步适配加载环境，不应替代 Desktop 验收。详细限制见 [验证记录](references/package-validation.md)。
 
@@ -64,4 +66,4 @@ cad-ai-test-automation/
 └── LICENSE              MIT
 ```
 
-完整 [运行流程](references/workflow.md)、[加载与弹窗处理](references/load-dialogs.md)、[PowerShell 兼容说明](references/powershell-compatibility.md)。本包不含 Autodesk DLL、业务插件和图纸；不永久注册插件，仅按选项记录指定 DLL 的信任，不全局关闭安全加载。
+完整 [运行流程](references/workflow.md)、[加载与弹窗处理](references/load-dialogs.md)、[PowerShell 兼容说明](references/powershell-compatibility.md)。本包不含 Autodesk DLL、业务插件和图纸；不永久注册插件，按选项记录本轮各 DLL 的信任，不全局关闭安全加载。

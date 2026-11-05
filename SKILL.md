@@ -2,7 +2,7 @@
 name: cad-ai-test-automation
 description: 指导 AI 编码助手为 Windows 上的 AutoCAD 二次开发建立并执行自动测试，涵盖场景设计、测试代码生成、构建、图纸副本执行、DLL 加载诊断、真实命令调度和回归验证。附 PowerShell 工具与 .NET 测试插件模板；界面入口按实际工具能力追加验证。
 metadata:
-  version: "1.0"
+  version: "1.1"
 ---
 
 # cad-ai-test-automation
@@ -35,7 +35,9 @@ metadata:
 4. 启动新的 CAD，ASCII `.scr` 从子进程环境取得 DLL 路径并执行 `NETLOAD → CADTEST_RUN → CADTEST_FINISH`。`Initialize` 只记录加载信号；API 在文档命令上下文内执行。清理使用独立 Session 命令关闭本轮文档且不保存。
 5. 检查 `run.json`、`started.txt`、`assertions.log`、`result.json`、程序集/输入哈希与必要 DWG 证据，再给结论。超时或处理弹窗后，用 `Read-CadTestResult.ps1` 读取同一轮，保留原启动器状态。
 
-DLL 加载提示见 [加载确认与弹窗](references/load-dialogs.md)。用户要求自动完成指定测试 DLL 的加载确认时，使用 `-AutoTrustRunner` 自动操作“始终加载 / Always Load”，不等待用户手点。辅助脚本校验本轮 PID、开始时间、DLL 名称与所在目录、SHA256、实际按钮文字及原生句柄归属，再发送一次 `BM_CLICK`。该选择会记住对应 DLL 的信任决定；已有会话授权继续有效，不重复询问。仅需本次加载可选 `-AutoLoadRunner`。不修改 `SECURELOAD`、`TRUSTEDPATHS` 或其他生产插件配置。非匹配提示先用 `Get-CadTestDialog.ps1` 获取实际控件；不猜坐标、不盲点确认。
+桌面测试使用 `-AutoTrustRunner`，直接操作本轮 CAD 进程里所有 DLL 安全提示的“始终加载 / Always Load”原生按钮，包括测试 DLL、其他功能 DLL 和依赖；逐个处理，图纸打开后、`started.txt` 或 `result.json` 出现后仍继续，直到进程结束或超时。该选择会记住对应 DLL 的信任决定；已有会话授权继续有效，不等待用户手点或重复询问。明确只需单次加载时使用 `-AutoLoadRunner`，两者互斥。不修改 `SECURELOAD`、`TRUSTEDPATHS`。
+
+Desktop 默认同时处理两类打开图纸提示：“代理信息”选择“显示代理图形”再确认；“指定字体给样式…”选择右侧“大字体”列表第二项，核验选中后点击“确定 / 确认”。有多个缺失字体就连续处理；若缺失字体提示没有可用的替换列表，可用明确的“指定替换”或“忽略”按钮。通过原生控件消息处理，完成一次后立即查找下一窗，空闲轮询间隔 100 毫秒。实现、记录与恢复见 [加载确认与弹窗](references/load-dialogs.md)。未知提示用 `Get-CadTestDialog.ps1` 观测实际控件，不猜坐标。
 
 ## CAD 执行约束
 
@@ -47,7 +49,7 @@ DLL 加载提示见 [加载确认与弹窗](references/load-dialogs.md)。用户
 - 真实命令测试放在服务事务结束后，使用同步 `Editor.Command` 和完整参数；记录 Ended/Failed/Cancelled，并核验图形。`SendStringToExecute` 是排队，调用返回不等于完成；UI、Session 和异步命令需要专用状态机和完成信号。
 - AutoCAD 长度单位取决于图纸约定及 `INSUNITS`，不能照搬 Revit 的毫米/304.8。明确 WCS/UCS、OCS、模型/纸空间、块/外参变换与容差。
 - 只关闭本轮拥有的文档且不保存；存在其他文档时保留进程。事务不能撤销文件、注册表或外部系统副作用。
-- 超时保留进程与证据，不杀进程、不无依据重跑；活动进程记录阻止并发测试。加载辅助操作有一次性意图记录，操作结果不确定时停止重试。
+- 超时保留进程与证据，不杀进程、不无依据重跑；活动进程记录阻止并发测试。每个已识别弹窗独立记录操作意图和结果；同一未关闭弹窗不重复确认，操作结果不确定时停止重试。
 
 ## 交付边界
 

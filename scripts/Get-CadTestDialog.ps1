@@ -10,18 +10,6 @@ $process = Get-CadRunProcess $run
 if (-not $process) { [pscustomobject]@{Status='ProcessNotRunning';Windows=@()}; return }
 if ($run.Host -ne 'Desktop') { [pscustomobject]@{Status='ConsoleHost';Windows=@()}; return }
 $windows = @(Get-CadDialogElements $run.ProcessId)
-$records = @()
-foreach ($window in $windows) {
-    $controls = @()
-    $items = $window.FindAll([Windows.Automation.TreeScope]::Descendants,[Windows.Automation.Condition]::TrueCondition)
-    foreach ($item in $items) {
-        $type = $item.Current.ControlType.ProgrammaticName
-        if ($type -in @('ControlType.Text','ControlType.Button','ControlType.Edit','ControlType.CheckBox','ControlType.Hyperlink')) {
-            $controls += [pscustomobject]@{Name=$item.Current.Name;AutomationId=$item.Current.AutomationId;Type=$type;Enabled=$item.Current.IsEnabled}
-        }
-    }
-    $records += [pscustomobject]@{Title=$window.Current.Name;ClassName=$window.Current.ClassName;Handle=$window.Current.NativeWindowHandle;Controls=$controls}
-}
-$observation = [pscustomobject]@{Status='Observed';ProcessId=$run.ProcessId;ObservedUtc=[DateTime]::UtcNow.ToString('o');Windows=$records}
+$observation = [pscustomobject]@{Status='Observed';ProcessId=$run.ProcessId;ObservedUtc=[DateTime]::UtcNow.ToString('o');Windows=$windows}
 Write-CadJson (Join-Path $root 'dialogs.latest.json') $observation
 $observation

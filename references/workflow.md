@@ -20,6 +20,8 @@
 8. Desktop 的 Session 清理命令 CloseAndDiscard 本轮拥有的文档，写原子 `result.json`；没有其他文档时在一次 Idle 回调内请求退出，避免在清理命令栈中直接退出。结果写出前不声称完成。
 9. 外部结果读取器校验运行/进程 ID、版本、加载路径/哈希、断言、清理及输入文件。CAD 非零退出码单独作为启动器失败。
 
+Desktop 在等待进程结束期间始终调用 `Handle-CadTestDialogs.ps1`：默认处理代理信息和字体替换，`-AutoTrustRunner` 还会点击本轮进程中全部 DLL 提示的“始终加载”。出现 `started.txt`、图纸已打开或已写出结果都不会提前停止处理。一次操作后立即重查，未操作时等待 100 毫秒；详情见 [加载与弹窗](load-dialogs.md)。
+
 进程级互斥锁与 `%LOCALAPPDATA%/cad-ai-test-automation/active.json` 阻止本工具并发启动；PID 还必须匹配开始时间、进程名与可执行文件路径。超时后活动记录保留。它不操作用户已经打开的 CAD。
 
 实验 Console 分支不引用 AcMgd，因而没有桌面的 CloseAndDiscard 扩展。其设计为记录 DiscardOnProcessExitRequested，由 SCR 发 QUIT/N，再由外部读取器要求进程已退出、记录零退出码且输入哈希不变；不会把请求退出冒充文档已关闭。本次尚未到达该测试阶段，2020 环境 NETLOAD 失败，见验证记录。Console 输出按其实际 UTF-16 解码后保存为 UTF-8。
@@ -36,7 +38,8 @@
 | result.json | API/命令结果、范围、加载程序集、撤销及不保存关闭证据 |
 | after-commands.dwg | 默认示例通过 Wblock 另存的数据库证据；不是屏幕截图 |
 | dialogs.latest.json | 只读诊断实际 PID 的窗口/控件 |
-| dll-approval.intent.json / dll-approval.action.json | 指定 DLL 的加载操作意图、按钮/句柄及调用记录；不是 DLL 加载成功的证明 |
+| dialog-actions/<ID>.intent.json / <ID>.action.json | 每个 DLL、代理或字体弹窗的操作意图、控件/句柄、结果和选中字体验证；不是业务通过的证明 |
+| dialog-action.pending.json | 等待当前弹窗关闭或内容推进；不重复点击同一弹窗，结果不确定时停止 |
 | console.stdout.log / console.stderr.log | Console 正常结束后捕获的原始输出 |
 
 排障顺序：无进程 → 路径/许可；有进程无 started → 启动界面、加载安全提示、脚本或依赖；有 started 无断言 → 命令未调度/图纸未准备；有断言无 result → 命令交互阻塞或 Session 清理未到达；失败结果 → 具体断言和异常。

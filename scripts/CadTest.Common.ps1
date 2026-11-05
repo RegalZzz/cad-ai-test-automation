@@ -22,31 +22,8 @@ function Get-CadRunProcess($Run) {
     return $candidate
 }
 function Get-CadHash($Path) { (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash }
-function Get-CadDialogElements($ProcessId) {
-    Add-Type -AssemblyName UIAutomationClient
-    Add-Type -AssemblyName UIAutomationTypes
-    $condition = [Windows.Automation.PropertyCondition]::new([Windows.Automation.AutomationElement]::ProcessIdProperty,[int]$ProcessId)
-    $roots = [Windows.Automation.AutomationElement]::RootElement.FindAll([Windows.Automation.TreeScope]::Children,$condition)
-    $contentCondition = [Windows.Automation.PropertyCondition]::new([Windows.Automation.AutomationElement]::AutomationIdProperty,'ContentText')
-    foreach ($window in $roots) {
-        # The CAD provider does not reliably return nested dialogs from class-name queries.
-        # Discover the observed ContentText element and walk to its actual dialog ancestor.
-        $seen = @{}
-        foreach ($content in $window.FindAll([Windows.Automation.TreeScope]::Descendants,$contentCondition)) {
-            $dialog = [Windows.Automation.TreeWalker]::ControlViewWalker.GetParent($content)
-            if ($dialog -and $dialog.Current.ClassName -eq '#32770' -and $dialog.Current.ProcessId -eq [int]$ProcessId) {
-                $key = [string]$dialog.Current.NativeWindowHandle
-                if (-not $seen.ContainsKey($key)) { $seen[$key]=$true; $dialog }
-            }
-        }
-    }
-}
-function Get-CadElementById($Root, $Id) {
-    $Root.FindFirst([Windows.Automation.TreeScope]::Descendants,
-        [Windows.Automation.PropertyCondition]::new([Windows.Automation.AutomationElement]::AutomationIdProperty,[string]$Id))
-}
 function Test-CadDialogDll($Text, $AssemblyPath) {
-    # CAD uses separate Name and Location fields. Never decode a path's \n as newline.
+    # Diagnostic parser: never decode a path's \n as newline.
     $lines = [regex]::Split($Text,'(?:\r?\n|\\r\\n)')
     $names = @(); $locations = @()
     foreach ($line in $lines) {
@@ -55,3 +32,4 @@ function Test-CadDialogDll($Text, $AssemblyPath) {
     }
     return $names.Count -eq 1 -and $locations.Count -eq 1 -and $names[0] -ieq [IO.Path]::GetFileName($AssemblyPath) -and $locations[0].TrimEnd('\') -ieq [IO.Path]::GetDirectoryName($AssemblyPath).TrimEnd('\')
 }
+. (Join-Path $PSScriptRoot 'CadTest.Dialogs.ps1')
