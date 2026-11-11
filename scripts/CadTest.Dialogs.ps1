@@ -124,6 +124,13 @@ function Get-CadDialogPlan($Dialog, [ValidateSet('None','Once','Always')]$DllAct
         $radio = $buttons | Where-Object { (ConvertTo-CadControlName $_.Name) -match '^(?i:显示代理图形|Show\s+proxy\s+graphics)[。.]?$' } | Select-Object -First 1
         if ($radio) { return [pscustomobject]@{Kind='Proxy';Choice=$radio;Confirm=$ok;Action='ShowProxyGraphics'} }
     }
+    # The missing SHX filename after the title prefix changes for each prompt.
+    # Match the dialog's purpose, then click its actual enabled Cancel button.
+    if ($Dialog.Title -match '^(?i:选择形文件|Select\s+Shape\s+File)\s*(?:[:：].*)?$') {
+        $cancel = $buttons | Where-Object { (ConvertTo-CadControlName $_.Name) -match '^(?i:取消|Cancel)$' } | Select-Object -First 1
+        if ($cancel) { return [pscustomobject]@{Kind='ShapeFile';Choice=$null;Confirm=$cancel;Action='CancelShapeFileSelection'} }
+        return $null
+    }
     $text = $Dialog.Title + ' ' + (($controls | ForEach-Object { $_.Name }) -join ' ')
     if ($text -notmatch '(?i)指定字体给样式|Specify\s+Font|缺少.*(?:SHX|字体)|缺失.*字体|未找到字体|Missing\s+(?:SHX|Font)') { return $null }
     $lists = @($controls | Where-Object { $_.ClassName -match '^(?i:ListBox|WindowsForms.*LISTBOX.*)$' } | Sort-Object Left)

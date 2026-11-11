@@ -51,9 +51,20 @@ public static class CadDialogFixture {
             SendMessage(leftList,0x0186,IntPtr.Zero,IntPtr.Zero); SendMessage(rightList,0x0186,IntPtr.Zero,IntPtr.Zero);
             Child("Static","\u672a\u627e\u5230\u5b57\u4f53: Missing"+stage,312,10,145,350,20,0);
             Child("Button","\u786e\u5b9a",1,420,35,100,30,0);
+        } else if (stage<8) {
+            SetWindowText(window,stage==5 ? "\u9009\u62e9\u5f62\u6587\u4ef6: AAA.SHX"
+                : stage==6 ? "\u9009\u62e9\u5f62\u6587\u4ef6\uff1a\u7f3a\u5931\u5b57\u4f53.shx" : "Select Shape File: Other.SHX");
+            Child("Edit",stage==5 ? "AAA.shx" : stage==6 ? "\u7f3a\u5931\u5b57\u4f53.shx" : "Other.SHX",401,10,15,350,25,0);
+            IntPtr shapeType=Child("ComboBox","",402,10,55,350,100,3);
+            SendString(shapeType,0x0143,IntPtr.Zero,"\u5f62\u5b57\u4f53 (*.shx)");
+            SendMessage(shapeType,0x014E,IntPtr.Zero,IntPtr.Zero);
+            Child("Button",stage==7 ? "&Open" : "\u6253\u5f00(&O)",1,380,15,130,30,0);
+            Child("Button",stage==7 ? "&Cancel" : stage==6 ? "\u53d6\u6d88(&C)" : "\u53d6\u6d88",2,380,55,130,30,0);
         } else {
             SetWindowText(window,"Save Changes?");
             Child("Button","OK",1,10,15,100,30,0);
+            Child("Button","Cancel",2,120,15,100,30,0);
+            Child("Edit","AAA.SHX",401,10,55,350,25,0);
         }
     }
     private static IntPtr Handle(IntPtr h,uint msg,IntPtr w,IntPtr l) {
@@ -61,10 +72,10 @@ public static class CadDialogFixture {
         if (msg==0x0111) {
             int id=(int)(w.ToInt64()&0xffff), code=(int)((w.ToInt64()>>16)&0xffff);
             if (id==302 && code==1) notifications++;
-            if ((stage<2 && id>=1001 && id<=1003) || (stage>=2 && id==1)) {
+            if ((stage<2 && id>=1001 && id<=1003) || (stage>=2 && id==1) || (stage>=5 && id==2)) {
                 string result = stage<2 ? "Dll|"+stage+"|"+id : stage==2 ? "Proxy|"+SendMessage(showRadio,0x00F0,IntPtr.Zero,IntPtr.Zero).ToInt64()
                     : stage<5 ? "Font|"+stage+"|"+SendMessage(leftList,0x0188,IntPtr.Zero,IntPtr.Zero).ToInt64()+"|"+SendMessage(rightList,0x0188,IntPtr.Zero,IntPtr.Zero).ToInt64()+"|"+notifications
-                    : "UNEXPECTED_CONFIRM";
+                    : stage<8 && id==2 ? "ShapeFile|"+stage+"|"+id : "UNEXPECTED_CONFIRM";
                 File.AppendAllText(evidence,result+Environment.NewLine); stage++; Populate(); return IntPtr.Zero;
             }
         }

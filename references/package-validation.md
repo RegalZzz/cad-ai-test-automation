@@ -1,6 +1,6 @@
 # 包内资源验证记录
 
-日期：2026-11-05。版本：v1.1；下列真实 AutoCAD 运行是 v1.0 的历史验证，新版弹窗处理的验证范围单独列出。
+最近更新：2026-11-11。版本：v1.1；下列真实 AutoCAD 运行是 v1.0 的历史验证，新版弹窗处理的验证范围单独列出。
 
 ## 已通过的真实 AutoCAD 运行
 
@@ -59,6 +59,17 @@ pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\tests\Test-Package.ps1
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\tests\Test-Dialogs.ps1
 # 用 powershell.exe 替代 pwsh.exe 可验证 Windows PowerShell 5.1。
 ```
+
+## 选择形文件补充回归（2026-11-11）
+
+`tests/Test-Dialogs.ps1` 在 PowerShell 7.5.4 与 Windows PowerShell 5.1.22621.7376 下各通过 54 项检查。原有五个提示后追加三个连续的形文件选择框，分别使用“选择形文件: AAA.SHX”“选择形文件：缺失字体.shx”和“Select Shape File: Other.SHX”标题，全部复用同一窗口句柄，并在 DLL 操作选项为 `None` 时执行生产处理器：
+
+- 每窗实际收到“取消”按钮（ID 2）的 `BM_CLICK`，未点击“打开”；三个操作均独立留有 `CancelShapeFileSelection` 意图和结果记录。
+- 文件名、中英文标题、全角冒号和按钮助记符变化后仍继续处理；所有提示均在合成 `started.txt` / `result.json` 已出现后处理。
+- 八窗分别记录、每窗只操作一次；取消链结束后无匹配弹窗，普通打开或保存窗口即使含 SHX 文件名和取消按钮也不处理；缺少可用取消按钮时不执行。
+- 原有 DLL、代理、大字体选择、未关闭弹窗去重、未知结果停止及 PID 校验继续通过。
+
+八窗处理分别耗时约 0.9 秒（7）和 1.2 秒（5.1），仅是本机合成控件测量。此处使用独立 Windows 原生窗口，不是实际 AutoCAD；选择形文件布局依据用户截图，尚未使用会触发该弹窗的真实 DWG 验证。
 
 ## 发现并修正的问题
 

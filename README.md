@@ -47,7 +47,7 @@ pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\Read-CadTestResult.p
 
 `-AutoTrustRunner` 保留原参数名，范围扩展为本轮 CAD 进程中的所有 DLL 安全提示：直接向“始终加载”按钮发送原生消息，逐个处理，不受测试 DLL 名称或启动信号限制，直到进程结束或超时。只需“加载一次”时使用 `-AutoLoadRunner`，两者互斥。不指定这两个选项时不自动确认 DLL。
 
-Desktop 默认处理“代理信息”和缺失字体提示：选择“显示代理图形”并确认；对于“指定字体给样式…”选择右侧“大字体”列表第二项并确定，连续出现就连续处理。处理后立即寻找下一窗，空闲时每 100 毫秒检查一次。详细实现、持久信任和操作记录见 [加载与弹窗处理](references/load-dialogs.md)。
+Desktop 默认处理“代理信息”和缺失字体提示：选择“显示代理图形”并确认；对于“指定字体给样式…”选择右侧“大字体”列表第二项并确定；对于“选择形文件: …”按固定标题前缀识别，缺失文件名可以变化，通过原生控件点击“取消”，连续出现就逐个取消直到不再出现。处理后立即寻找下一窗，空闲时每 100 毫秒检查一次。详细实现、持久信任和操作记录见 [加载与弹窗处理](references/load-dialogs.md)。
 
 已验证的运行入口是 **Desktop**。包内保留 `-HostMode CoreConsole -DrawingPath <DWG>` 实验入口；当前 AutoCAD 2020 环境在 NETLOAD 阶段失败，尚未通过实机验证。无界面模式需要进一步适配加载环境，不应替代 Desktop 验收。详细限制见 [验证记录](references/package-validation.md)。
 
