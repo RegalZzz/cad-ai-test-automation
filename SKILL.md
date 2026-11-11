@@ -2,7 +2,7 @@
 name: cad-ai-test-automation
 description: 指导 AI 编码助手为 Windows 上的 AutoCAD 二次开发建立并执行自动测试，涵盖场景设计、测试代码生成、构建、图纸副本执行、DLL 加载诊断、真实命令调度和回归验证。附 PowerShell 工具与 .NET 测试插件模板；界面入口按实际工具能力追加验证。
 metadata:
-  version: "1.1"
+  version: "1.2"
 ---
 
 # cad-ai-test-automation

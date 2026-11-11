@@ -1,6 +1,6 @@
 # 包内资源验证记录
 
-最近更新：2026-11-11。版本：v1.1；下列真实 AutoCAD 运行是 v1.0 的历史验证，新版弹窗处理的验证范围单独列出。
+最近更新：2026-11-11。版本：v1.2；下列真实 AutoCAD 运行是 v1.0 的历史验证，新版弹窗处理的验证范围单独列出。
 
 ## 已通过的真实 AutoCAD 运行
 
@@ -60,7 +60,7 @@ pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\tests\Test-Dialogs.ps1
 # 用 powershell.exe 替代 pwsh.exe 可验证 Windows PowerShell 5.1。
 ```
 
-## 选择形文件补充回归（2026-11-11）
+## v1.2 选择形文件补充回归（2026-11-11）
 
 `tests/Test-Dialogs.ps1` 在 PowerShell 7.5.4 与 Windows PowerShell 5.1.22621.7376 下各通过 54 项检查。原有五个提示后追加三个连续的形文件选择框，分别使用“选择形文件: AAA.SHX”“选择形文件：缺失字体.shx”和“Select Shape File: Other.SHX”标题，全部复用同一窗口句柄，并在 DLL 操作选项为 `None` 时执行生产处理器：
 

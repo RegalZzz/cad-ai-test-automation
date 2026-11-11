@@ -1,8 +1,16 @@
 # cad-ai-test-automation
 
-面向 Windows / AutoCAD 二次开发的 AI 自动测试 Skill，v1.1
+面向 Windows / AutoCAD 二次开发的 AI 自动测试 Skill，v1.2
 
 针对 CAD 重做 DLL 加载、命令执行、事务隔离、弹窗处理和图纸关闭机制。包含可运行的 PowerShell 工具与 C# 测试插件模板，帮助 AI 从业务需求完成场景、代码、构建、实机执行、断言和修正回归。
+
+## 更新记录
+
+### v1.2（2026-11-11）
+
+- 新增“选择形文件 / Select Shape File”弹窗处理：按固定标题前缀识别，兼容后面动态变化的缺失字体文件名，通过原生控件点击“取消 / Cancel”。
+- 支持连续取消：每次操作后立即重新检查，后续弹窗逐个取消直到不再出现；兼容窗口句柄复用、全角冒号和按钮助记符，每窗独立记录操作。
+- 回归验证：PowerShell 7 与 Windows PowerShell 5.1 各通过 54 项弹窗检查、47 项工具检查。弹窗验证使用合成原生窗口，尚未用真实 CAD 复测；详见 [验证记录](references/package-validation.md)。
 
 ## 安装与调用
 
